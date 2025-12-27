@@ -28,7 +28,9 @@ USER_AGENTS = [
 
 # ==================== BOT SETUP ====================
 default_properties = DefaultBotProperties(parse_mode="HTML")
-bot = Bot(token=BOT_TOKEN, default=default_properties)
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+if not BOT_TOKEN:
+    raise ValueError("BOT_TOKEN env var missing")
 dp = Dispatcher()
 logging.basicConfig(level=logging.INFO)
 
@@ -177,5 +179,6 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+
 
 
