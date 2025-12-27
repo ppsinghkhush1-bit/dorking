@@ -2,3 +2,8 @@ requests
 beautifulsoup4
 aiohttp
 # whatever your imports need
+aiogram
+aiohttp
+requests
+beautifulsoup4
+html
