@@ -45,41 +45,53 @@ RANDOM_DORKS = [
 async def scrape_ddg(dork: str) -> list[str]:
     results = []
     session = requests.Session()
-    base_url = "https://duckduckgo.com/html/"
+    base_url = "https://html.duckduckgo.com/html/"  # Force html subdomain
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.5",
+        "Accept-Encoding": "gzip, deflate",
+        "Referer": "https://duckduckgo.com/",
+        "Connection": "keep-alive",
+    }
+    session.headers.update(headers)
 
     for page in range(MAX_PAGES):
-        params = {"q": dork, "s": page * 30}
+        params = {"q": dork}
+        # No 's' param anymore – pagination broken differently
         retries = 0
-
         while retries < MAX_RETRIES:
             try:
-                headers = {"User-Agent": random.choice(USER_AGENTS)}
-                r = session.get(base_url, params=params, headers=headers, timeout=30)
-
-                if r.status_code != 200:
-                    raise Exception(f"HTTP {r.status_code}")
-
+                r = session.get(base_url, params=params, timeout=30)
+                if "sorry" in r.text.lower() or "blocked" in r.text.lower():
+                    raise Exception("DDG BLOCKED YOUR ASS")
                 soup = BeautifulSoup(r.text, "html.parser")
-                links = soup.find_all("a", class_="result__a")
-
+                
+                # UPDATED SELECTOR 2025 – results now in div.results --> a.result-link
+                links = soup.select("div.result__body a.result__a")  # or "a.result-link"
                 if not links:
-                    results.append("\n--- NO MORE RESULTS ---")
+                    results.append("\n--- BLOCKED OR NO RESULTS (DDG CHANGED SHIT AGAIN) ---")
                     return results
 
                 for a in links:
                     title = html.escape(a.get_text(strip=True))
                     href = a.get("href", "")
-                    results.append(f"{title} - {href}")
+                    if href.startswith("//duckduckgo.com/l/?uddg="):
+                        # Extract real URL
+                        import urllib.parse
+                        real_url = urllib.parse.parse_qs(urllib.parse.urlparse(href).query)['uddg'][0]
+                        results.append(f"{title} - {real_url}")
+                    else:
+                        results.append(f"{title} - {href}")
                     results.append("")
 
                 results.append(f"\n--- PAGE {page + 1} ---\n")
-                await asyncio.sleep(random.uniform(1.5, 3))
+                await asyncio.sleep(random.uniform(4, 8))  # Slower to avoid instant ban
                 break
-
             except Exception as e:
+                results.append(f"ERROR: {str(e)}")
                 retries += 1
-                time.sleep(2 * retries)
-
+                await asyncio.sleep(5 * retries)
     return results
 
 # ==================== HARVEST ====================
@@ -165,4 +177,5 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+
 
