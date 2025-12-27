@@ -1,9 +1,4 @@
-requests
-beautifulsoup4
-aiohttp
-# whatever your imports need
-aiogram
-aiohttp
-requests
-beautifulsoup4
-html
+aiogram==3.13.1
+aiohttp==3.10.5
+requests==2.32.3
+beautifulsoup4==4.12.3
