@@ -1,0 +1,4 @@
+requests
+beautifulsoup4
+aiohttp
+# whatever your imports need
